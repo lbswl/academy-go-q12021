@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/lbswl/academy-go-q12021/config"
 	"github.com/lbswl/academy-go-q12021/domain/model"
 	"github.com/lbswl/academy-go-q12021/infrastructure/datastore"
 
@@ -19,7 +20,8 @@ func main() {
 	//Init Router
 	r := mux.NewRouter()
 
-	books = datastore.LoadData(books, "data/books.csv")
+	config := config.GetConfig()
+	books = datastore.LoadData(books, config.CsvPath)
 
 	// Route Handlers / Endpoints
 	r.HandleFunc("/api/books", GetBooks).Methods("GET")
