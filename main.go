@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/lbswl/academy-go-q12021/config"
-	"github.com/lbswl/academy-go-q12021/domain/model"
 	"github.com/lbswl/academy-go-q12021/infrastructure/datastore"
+	"github.com/lbswl/academy-go-q12021/model"
 
 	"github.com/gorilla/mux"
 )
@@ -17,11 +17,12 @@ var books []model.Book
 
 func main() {
 
-	//Init Router
-	r := mux.NewRouter()
-
+	//Get configutation variable
 	config := config.GetConfig()
 	books = datastore.LoadData(books, config.CsvPath)
+
+	//Init Router
+	r := mux.NewRouter()
 
 	// Route Handlers / Endpoints
 	r.HandleFunc("/api/books", GetBooks).Methods("GET")

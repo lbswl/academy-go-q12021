@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/lbswl/academy-go-q12021/domain/model"
+	"github.com/lbswl/academy-go-q12021/model"
 )
 
 // LoadData loads data from a CSV file
