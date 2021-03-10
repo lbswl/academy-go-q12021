@@ -10,8 +10,10 @@ import (
 	"github.com/lbswl/academy-go-q12021/model"
 )
 
-// LoadData loads data from a CSV file
-func LoadData(books []model.Book, path string) []model.Book {
+// Reader reads data from a CSV file
+func Reader(path string) []model.Book {
+
+	var books []model.Book
 
 	f, err := os.Open("data/books.csv")
 
