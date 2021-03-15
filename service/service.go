@@ -11,7 +11,7 @@ import (
 )
 
 // Reader reads data from a CSV file
-func Reader(path string) []model.Book {
+func Reader() []model.Book {
 
 	var books []model.Book
 
