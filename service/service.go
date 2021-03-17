@@ -54,3 +54,18 @@ func Reader() []model.Book {
 
 	return books
 }
+
+func Writer(crypto string) {
+	file, err := os.OpenFile("data/data.csv", os.O_CREATE|os.O_WRONLY, 0777)
+	defer file.Close()
+
+	if err != nil {
+		log.Fatal("error while writing  data file")
+	}
+
+	cryptoString := []string{crypto}
+	csvWriter := csv.NewWriter(file)
+	strWrite := [][]string{cryptoString}
+	csvWriter.WriteAll(strWrite)
+	csvWriter.Flush()
+}

@@ -12,6 +12,7 @@ func New() *mux.Router {
 	// Route Handlers / Endpoints
 	r.HandleFunc("/api/books", controller.GetBooks).Methods("GET")
 	r.HandleFunc("/api/books/{id}", controller.GetBook).Methods("GET")
+	r.HandleFunc("/api/external", controller.GetExternalData).Methods("GET")
 
 	return r
 }

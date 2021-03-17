@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lbswl/academy-go-q12021/client"
 	"github.com/lbswl/academy-go-q12021/model"
 	"github.com/lbswl/academy-go-q12021/service"
 )
@@ -39,5 +40,24 @@ func GetBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(books)
+
+}
+
+func GetExternalData(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	crypto, err := client.FetchCryptocurreyncy()
+
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Error fecthing external data"}`))
+		return
+	}
+
+	//log.Printf("Crypto: %v", crypto)
+	//Write crypto to the data file
+	service.Writer(crypto)
+	w.WriteHeader(http.StatusOK)
 
 }
