@@ -6,6 +6,7 @@ require (
 	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/gocarina/gocsv v0.0.0-20201208093247-67c824bc04d4 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/spf13/viper v1.7.1 // indirect
 	github.com/tkanos/gonfig v0.0.0-20210106201359-53e13348de2f // indirect

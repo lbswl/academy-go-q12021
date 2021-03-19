@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	"github.com/lbswl/academy-go-q12021/service"
+	"github.com/lbswl/academy-go-q12021/usecase"
 	"github.com/lbswl/academy-go-q12021/util"
 )
 
@@ -13,6 +15,9 @@ func main() {
 	if err != nil {
 		log.Fatal("cannot load configuration file")
 	}
+
+	serviceCSV := service.New(config.DataPath, config.DataFile, config.UrlExternalApi)
+	useCase := usecase.New(serviceCSV)
 
 	//Init Router
 	//r := router.New()
