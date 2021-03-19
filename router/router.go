@@ -1,18 +1,24 @@
 package router
 
 import (
-	"github.com/lbswl/academy-go-q12021/controller"
+	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-func New() *mux.Router {
+type Controller interface {
+	GetUsers(w http.ResponseWriter, r *http.Request)
+	GetUserById(w http.ResponseWriter, r *http.Request)
+	GetExternalData(w http.ResponseWriter, r *http.Request)
+}
+
+func New(controller Controller) *mux.Router {
 	r := &mux.Router{}
 
 	// Route Handlers / Endpoints
-	r.HandleFunc("/api/books", controller.GetBooks).Methods("GET")
-	r.HandleFunc("/api/books/{id}", controller.GetBook).Methods("GET")
-	r.HandleFunc("/api/external", controller.GetExternalData).Methods("GET")
+	r.HandleFunc("/api/books", controller.GetUsers).Methods("GET")
+	r.HandleFunc("/api/books/{id}", controller.GetUserById).Methods("GET")
+	r.HandleFunc("/api/external", controller.GetExternalData).Methods("PUT")
 
 	return r
 }
