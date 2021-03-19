@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
@@ -19,64 +18,66 @@ type Service interface {
 }
 
 type ServiceCSV struct {
-	DataPath       string
-	DataFile       string
-	UrlExternalApi string
+	DataPath               string
+	DataFile               string
+	NumberCallsExternalApi int
+	UrlExternalApi         string
 }
 
-func New(path string, file string, url string) ServiceCSV {
-	return ServiceCSV{DataPath: path, DataFile: file, UrlExternalApi: url}
+func New(path string, file string, numCalls int, url string) ServiceCSV {
+	return ServiceCSV{DataPath: path, NumberCallsExternalApi: numCalls,
+		DataFile: file, UrlExternalApi: url}
 }
 
-func (s *ServiceCSV) ReadFile() []*model.UserCSV {
+func (s *ServiceCSV) ReadFile() ([]*model.UserCSV, error) {
+	users := []*model.UserCSV{}
+
 	fullPath := s.DataPath + s.DataFile
 	usersFile, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE, os.ModePerm)
 
 	if err != nil {
-		log.Fatal(err)
+		return users, err
 	}
 
 	defer usersFile.Close()
 
-	users := []*model.UserCSV{}
-
 	if err := gocsv.UnmarshalFile(usersFile, &users); err != nil { // Load clients from file
-		panic(err)
+		return users, err
 	}
 
-	return users
+	return users, nil
 
 }
 
-func (s *ServiceCSV) WriteFile(users []*model.UserCSV) {
+func (s *ServiceCSV) WriteFile(users []*model.UserCSV) error {
 	fullPath := s.DataPath + s.DataFile
 	usersFile, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer usersFile.Close()
 
 	if _, err := usersFile.Seek(0, 0); err != nil { // Go to the end of the file
-		log.Fatal(err)
+		return err
 	}
 
 	err = gocsv.MarshalFile(&users, usersFile) // Use this to save the CSV back to the file
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
+	return nil
 }
 
-func (s *ServiceCSV) ClientExernalApi(numberCalls int) []*model.UserCSV {
+func (s *ServiceCSV) ClientExernalApi() ([]*model.UserCSV, error) {
 
 	users := []*model.UserCSV{}
 
-	for i := 0; i < numberCalls; i++ {
+	for i := 0; i < s.NumberCallsExternalApi; i++ {
 
-		resp, err := http.Get("https://randomuser.me/api/?inc=gender,name,nat,email,cell")
+		resp, err := http.Get(s.UrlExternalApi)
 
 		if err != nil {
-			log.Fatalln(err)
+			return users, err
 		}
 
 		defer resp.Body.Close()
@@ -84,7 +85,7 @@ func (s *ServiceCSV) ClientExernalApi(numberCalls int) []*model.UserCSV {
 		body, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
-			log.Fatalln(err)
+			return users, err
 		}
 
 		jsonData := []byte(string(body))
@@ -94,7 +95,7 @@ func (s *ServiceCSV) ClientExernalApi(numberCalls int) []*model.UserCSV {
 		err = json.Unmarshal(jsonData, &response)
 
 		if err != nil {
-			log.Println(err)
+			return users, err
 		}
 
 		users = append(users, &model.UserCSV{Id: i,
@@ -104,5 +105,5 @@ func (s *ServiceCSV) ClientExernalApi(numberCalls int) []*model.UserCSV {
 
 	}
 
-	return users
+	return users, nil
 }

@@ -6,47 +6,92 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
-	"github.com/lbswl/academy-go-q12021/client"
 	"github.com/lbswl/academy-go-q12021/model"
-	"github.com/lbswl/academy-go-q12021/service"
+
+	"github.com/gorilla/mux"
 )
 
-// GetBooks returns all books
-func GetBooks(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	books := service.Reader()
-	json.NewEncoder(w).Encode(books)
+type UseCase interface {
+	FindUserById(Id int) ([]*model.UserJSON, error)
+	ReadAllUsers() ([]*model.UserJSON, error)
+	GetExternalApiUsers() error
 }
 
-// GetBook returns a book given its ID
-func GetBook(w http.ResponseWriter, r *http.Request) {
+type Controller struct {
+	useCase UseCase
+}
+
+func New(u UseCase) *Controller {
+	return &Controller{u}
+}
+
+// GetUsers returns all users
+func (c *Controller) GetUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	users, err := c.useCase.ReadAllUsers()
+
+	if err != nil {
+		log.Fatal(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Error reading the users file"}`))
+		return
+	}
+
+	usersMarshalled, err := json.Marshal(users)
+
+	if err != nil {
+		log.Fatal(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Error marshalling the users file"}`))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(usersMarshalled)
+}
+
+// GetUser returns a user given its Id
+func (c *Controller) GetUserById(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	books := service.Reader()
 
 	id, errConv := strconv.Atoi(params["id"])
 
 	if errConv != nil {
 		log.Fatal(errConv)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Error reading the Id"}`))
 	}
 
-	index := model.FindBookByID(books, id)
+	user, err := c.useCase.FindUserById(id)
 
-	if index > -1 {
-		json.NewEncoder(w).Encode(books[index])
+	if err != nil {
+		log.Fatal(err)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error": "User does not exist"}`))
 		return
 	}
-	json.NewEncoder(w).Encode(books)
+
+	userMarshalled, err := json.Marshal(user)
+
+	if err != nil {
+		log.Fatal(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Error marshalling the users file"}`))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(userMarshalled)
 
 }
 
-func GetExternalData(w http.ResponseWriter, r *http.Request) {
+//GetExternalData calls and external Id and saves the result to a CSV file
+func (c *Controller) GetExternalData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	crypto, err := client.FetchCryptocurreyncy()
+	err := c.useCase.GetExternalApiUsers()
 
 	if err != nil {
 		log.Println(err)
@@ -55,9 +100,7 @@ func GetExternalData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//log.Printf("Crypto: %v", crypto)
-	//Write crypto to the data file
-	service.Writer(crypto)
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": "Fetched external data"}`))
 
 }

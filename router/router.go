@@ -16,9 +16,9 @@ func New(controller Controller) *mux.Router {
 	r := &mux.Router{}
 
 	// Route Handlers / Endpoints
-	r.HandleFunc("/api/books", controller.GetUsers).Methods("GET")
-	r.HandleFunc("/api/books/{id}", controller.GetUserById).Methods("GET")
-	r.HandleFunc("/api/external", controller.GetExternalData).Methods("PUT")
+	r.HandleFunc("/api/users", controller.GetUsers).Methods("GET")
+	r.HandleFunc("/api/users/{id}", controller.GetUserById).Methods("GET")
+	r.HandleFunc("/api/external", controller.GetExternalData).Methods("GET")
 
 	return r
 }
