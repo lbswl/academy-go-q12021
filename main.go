@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/lbswl/academy-go-q12021/util"
@@ -14,8 +13,6 @@ func main() {
 	if err != nil {
 		log.Fatal("cannot load configuration file")
 	}
-
-	fmt.Println(config.NumberCallsExternalApi)
 
 	//Init Router
 	//r := router.New()
