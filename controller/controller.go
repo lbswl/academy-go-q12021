@@ -1,19 +1,16 @@
 package controller
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/lbswl/academy-go-q12021/model"
 
 	"github.com/gorilla/mux"
 )
 
 type UseCase interface {
-	FindUserById(Id int) ([]*model.UserJSON, error)
-	ReadAllUsers() ([]*model.UserJSON, error)
+	FindUserById(Id int) ([]byte, error)
+	ReadAllUsers() ([]byte, error)
 	GetExternalApiUsers() error
 }
 
@@ -33,21 +30,12 @@ func (c *Controller) GetUsers(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "Error reading the users file"}`))
-		return
-	}
-
-	usersMarshalled, err := json.Marshal(users)
-
-	if err != nil {
-		log.Fatal(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "Error marshalling the users file"}`))
+		w.Write(users)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(usersMarshalled)
+	w.Write(users)
 }
 
 // GetUser returns a user given its Id
@@ -60,8 +48,8 @@ func (c *Controller) GetUserById(w http.ResponseWriter, r *http.Request) {
 
 	if errConv != nil {
 		log.Fatal(errConv)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "Error reading the Id"}`))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Error parsing the Id parameter"}`))
 	}
 
 	user, err := c.useCase.FindUserById(id)
@@ -69,21 +57,11 @@ func (c *Controller) GetUserById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"error": "User does not exist"}`))
-		return
-	}
-
-	userMarshalled, err := json.Marshal(user)
-
-	if err != nil {
-		log.Fatal(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "Error marshalling the users file"}`))
-		return
+		w.Write(user)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(userMarshalled)
+	w.Write(user)
 
 }
 
@@ -97,7 +75,6 @@ func (c *Controller) GetExternalData(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"error": "Error fecthing external data"}`))
-		return
 	}
 
 	w.WriteHeader(http.StatusOK)
