@@ -51,11 +51,13 @@ type Info struct {
 	Version       string `json:"version,omitempty"`
 }
 
+// New returns a Service struct
 func New(path string, file string, numCalls int, url string) ServiceCSV {
 	return ServiceCSV{DataPath: path, NumberCallsExternalApi: numCalls,
 		DataFile: file, UrlExternalApi: url}
 }
 
+// ReadFile returns the contents of users csv file
 func (s *ServiceCSV) ReadFile() ([]*model.UserCSV, error) {
 	users := []*model.UserCSV{}
 
@@ -76,6 +78,7 @@ func (s *ServiceCSV) ReadFile() ([]*model.UserCSV, error) {
 
 }
 
+// WriteFile writes to the users csv file
 func (s *ServiceCSV) WriteFile(users []*model.UserCSV) error {
 	fullPath := s.DataPath + s.DataFile
 	usersFile, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
@@ -95,6 +98,7 @@ func (s *ServiceCSV) WriteFile(users []*model.UserCSV) error {
 	return nil
 }
 
+// ClientExternalApi calls the external service for obtaining new users
 func (s *ServiceCSV) ClientExernalApi() ([]*model.UserCSV, error) {
 
 	users := []*model.UserCSV{}

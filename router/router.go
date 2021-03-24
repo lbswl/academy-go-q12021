@@ -12,6 +12,7 @@ type Controller interface {
 	GetExternalData(w http.ResponseWriter, r *http.Request)
 }
 
+// New returns an mux router
 func New(controller Controller) *mux.Router {
 	r := &mux.Router{}
 

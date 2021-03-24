@@ -12,10 +12,12 @@ type UseCase struct {
 	service service.ServiceCSV
 }
 
+// New returns a usecase struct
 func New(service service.ServiceCSV) *UseCase {
 	return &UseCase{service}
 }
 
+// FindUserbyId returns a user given its id
 func (u *UseCase) FindUserById(Id int) ([]byte, error) {
 	usersJSON := []*model.UserJSON{}
 	users, err := u.service.ReadFile()
@@ -42,6 +44,7 @@ func (u *UseCase) FindUserById(Id int) ([]byte, error) {
 	return []byte(`{"error": "User does not exist"}`), errors.New("id not found")
 }
 
+// ReadAllUsers returns all users in the csv file
 func (u *UseCase) ReadAllUsers() ([]byte, error) {
 
 	usersJSON := []*model.UserJSON{}
@@ -67,6 +70,7 @@ func (u *UseCase) ReadAllUsers() ([]byte, error) {
 
 }
 
+// GetExternalApiUsers writes the response from external API to users csv file
 func (u *UseCase) GetExternalApiUsers() error {
 
 	userCSV, err := u.service.ClientExernalApi()
