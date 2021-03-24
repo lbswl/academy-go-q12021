@@ -24,8 +24,8 @@ func (u *UseCase) FindUserById(Id int) ([]*model.UserJSON, error) {
 	}
 
 	for _, item := range users {
-		if item.Id == Id {
-			usersJSON = append(usersJSON, &model.UserJSON{Id: item.Id,
+		if item.ID == Id {
+			usersJSON = append(usersJSON, &model.UserJSON{ID: item.ID,
 				Gender: item.Gender, Title: item.Title, First: item.First, Last: item.Last,
 				Email: item.Email, CellPhone: item.CellPhone, Nationality: item.Nationality})
 			return usersJSON, nil
@@ -45,7 +45,7 @@ func (u *UseCase) ReadAllUsers() ([]*model.UserJSON, error) {
 	}
 
 	for _, item := range usersCSV {
-		usersJSON = append(usersJSON, &model.UserJSON{Id: item.Id,
+		usersJSON = append(usersJSON, &model.UserJSON{ID: item.ID,
 			Gender: item.Gender, Title: item.Title, First: item.First, Last: item.Last,
 			Email: item.Email, CellPhone: item.CellPhone, Nationality: item.Nationality})
 	}

@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
@@ -22,6 +23,32 @@ type ServiceCSV struct {
 	DataFile               string
 	NumberCallsExternalApi int
 	UrlExternalApi         string
+}
+
+type Response struct {
+	Results []Results `json:"results,omitempty"`
+	Info    Info      `json:"info,omitempty"`
+}
+
+type Results struct {
+	Gender      string `json:"gender,omitempty"`
+	Name        Name   `json:"name,omitempty"`
+	Email       string `json:"email,omitempty"`
+	Cell        string `json:"cell,omitempty"`
+	Nationality string `json:"nat,omitempty"`
+}
+
+type Name struct {
+	Title string `json:"title,omitempty"`
+	First string `json:"first,omitempty"`
+	Last  string `json:"last,omitempty"`
+}
+
+type Info struct {
+	Seed          string `json:"seed,omitempty"`
+	NumberResults int    `json:"results,omitempty"`
+	Page          int    `json:"page,omitempty"`
+	Version       string `json:"version,omitempty"`
 }
 
 func New(path string, file string, numCalls int, url string) ServiceCSV {
@@ -80,6 +107,10 @@ func (s *ServiceCSV) ClientExernalApi() ([]*model.UserCSV, error) {
 			return users, err
 		}
 
+		if resp.StatusCode != http.StatusOK {
+			log.Fatal("Exernal API returned status code: ", resp.StatusCode)
+		}
+
 		defer resp.Body.Close()
 
 		body, err := ioutil.ReadAll(resp.Body)
@@ -90,7 +121,7 @@ func (s *ServiceCSV) ClientExernalApi() ([]*model.UserCSV, error) {
 
 		jsonData := []byte(string(body))
 
-		var response model.Response
+		var response Response
 
 		err = json.Unmarshal(jsonData, &response)
 
@@ -98,7 +129,7 @@ func (s *ServiceCSV) ClientExernalApi() ([]*model.UserCSV, error) {
 			return users, err
 		}
 
-		users = append(users, &model.UserCSV{Id: i,
+		users = append(users, &model.UserCSV{ID: i,
 			Gender: response.Results[0].Gender, Title: response.Results[0].Name.Title,
 			First: response.Results[0].Name.First, Last: response.Results[0].Name.Last,
 			Email: response.Results[0].Email, CellPhone: response.Results[0].Cell, Nationality: response.Results[0].Nationality})
