@@ -86,3 +86,29 @@ func (u *UseCase) GetExternalApiUsers() error {
 	return nil
 
 }
+
+// ReadAllUsersConcurrently returns all users in the csv file
+func (u *UseCase) ReadAllUsersConcurrently(params_type string, items int, items_per_workers int) ([]byte, error) {
+
+	usersJSON := []*model.UserJSON{}
+	usersCSV, err := u.service.ReadFile()
+
+	if err != nil {
+		return []byte(`{"error": "Error reading the users file"}`), err
+	}
+
+	for _, item := range usersCSV {
+		usersJSON = append(usersJSON, &model.UserJSON{ID: item.ID,
+			Gender: item.Gender, Title: item.Title, First: item.First, Last: item.Last,
+			Email: item.Email, CellPhone: item.CellPhone, Nationality: item.Nationality})
+	}
+
+	usersMarshalled, err := json.Marshal(usersJSON)
+
+	if err != nil {
+		return []byte(`{"error": "Error marshalling the users file"}`), err
+	}
+
+	return usersMarshalled, nil
+
+}
