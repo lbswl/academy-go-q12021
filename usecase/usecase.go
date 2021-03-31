@@ -3,6 +3,10 @@ package usecase
 import (
 	"encoding/json"
 	"errors"
+	"log"
+	"math/rand"
+	"runtime"
+	"sync"
 
 	"github.com/lbswl/academy-go-q12021/model"
 	"github.com/lbswl/academy-go-q12021/service"
@@ -90,18 +94,59 @@ func (u *UseCase) GetExternalApiUsers() error {
 // ReadAllUsersConcurrently returns all users in the csv file
 func (u *UseCase) ReadAllUsersConcurrently(params_type string, items int, items_per_workers int) ([]byte, error) {
 
-	usersJSON := []*model.UserJSON{}
 	usersCSV, err := u.service.ReadFile()
 
 	if err != nil {
 		return []byte(`{"error": "Error reading the users file"}`), err
 	}
 
-	for _, item := range usersCSV {
-		usersJSON = append(usersJSON, &model.UserJSON{ID: item.ID,
-			Gender: item.Gender, Title: item.Title, First: item.First, Last: item.Last,
-			Email: item.Email, CellPhone: item.CellPhone, Nationality: item.Nationality})
+	usersJSON := []*model.UserJSON{}
+
+	values := make(chan int)
+	shutdown := make(chan struct{})
+	poolSize := runtime.GOMAXPROCS(0)
+
+	var wg sync.WaitGroup
+	wg.Add(poolSize)
+
+	for i := 0; i < poolSize; i++ {
+		go func(id int, items_per_workers int) {
+
+			for {
+				n := rand.Intn(items - 1)
+				select {
+				case values <- n:
+					log.Printf("Worker %d sent %d\n", id, n)
+				case <-shutdown:
+					log.Printf("Worker %d shutting down\n", id)
+					wg.Done()
+					return
+				}
+			}
+		}(i, items_per_workers)
 	}
+
+	for i := range values {
+
+		if params_type == "odd" && i%2 == 0 {
+			continue
+		}
+
+		if params_type == "even" && i%2 != 0 {
+			continue
+		}
+
+		usersJSON = append(usersJSON, &model.UserJSON{ID: usersCSV[i].ID,
+			Gender: usersCSV[i].Gender, Title: usersCSV[i].Title, First: usersCSV[i].First, Last: usersCSV[i].Last,
+			Email: usersCSV[i].Email, CellPhone: usersCSV[i].CellPhone, Nationality: usersCSV[i].Nationality})
+
+		if len(usersJSON) == items || len(usersJSON) == len(usersCSV) {
+			break
+		}
+	}
+
+	close(shutdown)
+	wg.Wait()
 
 	usersMarshalled, err := json.Marshal(usersJSON)
 
