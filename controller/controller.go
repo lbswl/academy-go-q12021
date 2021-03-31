@@ -11,7 +11,7 @@ import (
 type UseCase interface {
 	FindUserById(Id int) ([]byte, error)
 	ReadAllUsers() ([]byte, error)
-	ReadAllUsersConcurrently(params_type string, items int, items_per_workers int) ([]byte, error)
+	ReadAllUsersConcurrently(paramsType string, items int, itemsPerWorkers int) ([]byte, error)
 	GetExternalApiUsers() error
 }
 
@@ -88,7 +88,7 @@ func (c *Controller) GetUsersConcurrent(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(r)
-	params_type := params["type"]
+	paramsType := params["type"]
 
 	items, errConv := strconv.Atoi(params["items"])
 
@@ -98,7 +98,7 @@ func (c *Controller) GetUsersConcurrent(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(`{"error": "Error parsing the items parameter"}`))
 	}
 
-	items_per_workers, errConv := strconv.Atoi(params["items_per_workers"])
+	itemsPerWorkers, errConv := strconv.Atoi(params["items_per_workers"])
 
 	if errConv != nil {
 		log.Fatal(errConv)
@@ -106,7 +106,7 @@ func (c *Controller) GetUsersConcurrent(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(`{"error": "Error parsing the items_per_workers parameter"}`))
 	}
 
-	users, err := c.useCase.ReadAllUsersConcurrently(params_type, items, items_per_workers)
+	users, err := c.useCase.ReadAllUsersConcurrently(paramsType, items, itemsPerWorkers)
 
 	if err != nil {
 		log.Fatal(err)

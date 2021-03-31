@@ -92,7 +92,7 @@ func (u *UseCase) GetExternalApiUsers() error {
 }
 
 // ReadAllUsersConcurrently returns all users in the csv file
-func (u *UseCase) ReadAllUsersConcurrently(params_type string, items int, items_per_workers int) ([]byte, error) {
+func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPerWorkers int) ([]byte, error) {
 
 	usersCSV, err := u.service.ReadFile()
 
@@ -110,10 +110,12 @@ func (u *UseCase) ReadAllUsersConcurrently(params_type string, items int, items_
 	wg.Add(poolSize)
 
 	for i := 0; i < poolSize; i++ {
-		go func(id int, items_per_workers int) {
-
+		go func(id int, itemsPerWorkers int) {
+			// n := id
+			// currentNumItems := 0
 			for {
-				n := rand.Intn(items - 1)
+
+				n := rand.Intn(len(usersCSV) - 1)
 				select {
 				case values <- n:
 					log.Printf("Worker %d sent %d\n", id, n)
@@ -122,17 +124,25 @@ func (u *UseCase) ReadAllUsersConcurrently(params_type string, items int, items_
 					wg.Done()
 					return
 				}
+
+				//if currentNumItems != itemsPerWorkers {
+				//    n = n + (poolSize - 1)
+				//}
 			}
-		}(i, items_per_workers)
+		}(i, itemsPerWorkers)
 	}
 
 	for i := range values {
 
-		if params_type == "odd" && i%2 == 0 {
+		if paramsType == "odd" && i%2 == 0 {
 			continue
 		}
 
-		if params_type == "even" && i%2 != 0 {
+		if paramsType == "even" && i%2 != 0 {
+			continue
+		}
+
+		if i > len(usersCSV)-1 {
 			continue
 		}
 
