@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"math/rand"
 	"runtime"
 	"sync"
 
@@ -111,11 +110,10 @@ func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPe
 
 	for i := 0; i < poolSize; i++ {
 		go func(id int, itemsPerWorkers int) {
-			// n := id
-			// currentNumItems := 0
+			n := id
+			currentNumItems := 0
 			for {
 
-				n := rand.Intn(len(usersCSV) - 1)
 				select {
 				case values <- n:
 					log.Printf("Worker %d sent %d\n", id, n)
@@ -125,9 +123,10 @@ func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPe
 					return
 				}
 
-				//if currentNumItems != itemsPerWorkers {
-				//    n = n + (poolSize - 1)
-				//}
+				currentNumItems++
+				if currentNumItems < itemsPerWorkers {
+					n = n + poolSize
+				}
 			}
 		}(i, itemsPerWorkers)
 	}
@@ -142,17 +141,13 @@ func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPe
 			continue
 		}
 
-		if i > len(usersCSV)-1 {
-			continue
+		if len(usersJSON) == items || len(usersJSON) == len(usersCSV) || i > len(usersCSV)-1 {
+			break
 		}
 
 		usersJSON = append(usersJSON, &model.UserJSON{ID: usersCSV[i].ID,
 			Gender: usersCSV[i].Gender, Title: usersCSV[i].Title, First: usersCSV[i].First, Last: usersCSV[i].Last,
 			Email: usersCSV[i].Email, CellPhone: usersCSV[i].CellPhone, Nationality: usersCSV[i].Nationality})
-
-		if len(usersJSON) == items || len(usersJSON) == len(usersCSV) {
-			break
-		}
 	}
 
 	close(shutdown)
