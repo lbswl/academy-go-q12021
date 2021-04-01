@@ -131,6 +131,7 @@ func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPe
 		}(i, itemsPerWorkers)
 	}
 
+	last_index := 0
 	for i := range values {
 
 		if paramsType == "odd" && i%2 == 0 {
@@ -145,9 +146,14 @@ func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPe
 			break
 		}
 
+		if last_index == i {
+			continue
+		}
+
 		usersJSON = append(usersJSON, &model.UserJSON{ID: usersCSV[i].ID,
 			Gender: usersCSV[i].Gender, Title: usersCSV[i].Title, First: usersCSV[i].First, Last: usersCSV[i].Last,
 			Email: usersCSV[i].Email, CellPhone: usersCSV[i].CellPhone, Nationality: usersCSV[i].Nationality})
+		last_index = i
 	}
 
 	close(shutdown)
