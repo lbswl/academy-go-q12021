@@ -141,7 +141,7 @@ func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPe
 			continue
 		}
 
-		if len(usersJSON) == items || len(usersJSON) == len(usersCSV) || i > len(usersCSV)-1 {
+		if len(usersJSON) == items || i > len(usersCSV)-1 {
 			break
 		}
 
