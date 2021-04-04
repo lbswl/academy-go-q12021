@@ -23,7 +23,7 @@ func New(service service.ServiceCSV) *UseCase {
 // FindUserbyId returns a user given its id
 func (u *UseCase) FindUserById(Id int) ([]byte, error) {
 	usersJSON := []*model.UserJSON{}
-	users, err := u.service.ReadFile()
+	users, err := u.service.ReadDataSource()
 
 	if err != nil {
 		return []byte(`{"error": "Error reading users file"}`), err
@@ -51,7 +51,7 @@ func (u *UseCase) FindUserById(Id int) ([]byte, error) {
 func (u *UseCase) ReadAllUsers() ([]byte, error) {
 
 	usersJSON := []*model.UserJSON{}
-	usersCSV, err := u.service.ReadFile()
+	usersCSV, err := u.service.ReadDataSource()
 
 	if err != nil {
 		return []byte(`{"error": "Error reading the users file"}`), err
@@ -81,7 +81,7 @@ func (u *UseCase) GetExternalApiUsers() error {
 		return err
 	}
 
-	err = u.service.WriteFile(userCSV)
+	err = u.service.WriteDataSource(userCSV)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (u *UseCase) GetExternalApiUsers() error {
 // ReadAllUsersConcurrently returns all users in the csv file
 func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPerWorkers int) ([]byte, error) {
 
-	usersCSV, err := u.service.ReadFile()
+	usersCSV, err := u.service.ReadDataSource()
 
 	if err != nil {
 		return []byte(`{"error": "Error reading the users file"}`), err

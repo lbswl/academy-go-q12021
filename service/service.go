@@ -13,14 +13,14 @@ import (
 )
 
 type Service interface {
-	ReadFile() []*model.UserCSV
-	WriteFile([]model.UserCSV)
+	ReadDataSource() []*model.UserCSV
+	WriteDataSource([]model.UserCSV)
 	ClientExernalApi(numberCalls int)
 }
 
 type ServiceCSV struct {
-	DataPath               string
-	DataFile               string
+	Rf                     *os.File
+	Wf                     *os.File
 	NumberCallsExternalApi int
 	UrlExternalApi         string
 }
@@ -52,25 +52,15 @@ type Info struct {
 }
 
 // New returns a Service struct
-func New(path string, file string, numCalls int, url string) ServiceCSV {
-	return ServiceCSV{DataPath: path, NumberCallsExternalApi: numCalls,
-		DataFile: file, UrlExternalApi: url}
+func New(rf *os.File, wf *os.File, numCalls int, url string) ServiceCSV {
+	return ServiceCSV{Rf: rf, Wf: wf, NumberCallsExternalApi: numCalls, UrlExternalApi: url}
 }
 
 // ReadFile returns the contents of users csv file
-func (s *ServiceCSV) ReadFile() ([]*model.UserCSV, error) {
+func (s *ServiceCSV) ReadDataSource() ([]*model.UserCSV, error) {
 	users := []*model.UserCSV{}
 
-	fullPath := s.DataPath + s.DataFile
-	usersFile, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE, os.ModePerm)
-
-	if err != nil {
-		return users, err
-	}
-
-	defer usersFile.Close()
-
-	if err := gocsv.UnmarshalFile(usersFile, &users); err != nil { // Load clients from file
+	if err := gocsv.UnmarshalFile(s.Rf, &users); err != nil { // Load clients from file
 		return users, err
 	}
 
@@ -79,22 +69,18 @@ func (s *ServiceCSV) ReadFile() ([]*model.UserCSV, error) {
 }
 
 // WriteFile writes to the users csv file
-func (s *ServiceCSV) WriteFile(users []*model.UserCSV) error {
-	fullPath := s.DataPath + s.DataFile
-	usersFile, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return err
-	}
-	defer usersFile.Close()
+func (s *ServiceCSV) WriteDataSource(users []*model.UserCSV) error {
 
-	if _, err := usersFile.Seek(0, 0); err != nil { // Go to the end of the file
+	if _, err := s.Wf.Seek(0, 0); err != nil { // Go to the end of the file
 		return err
 	}
 
-	err = gocsv.MarshalFile(&users, usersFile) // Use this to save the CSV back to the file
+	err := gocsv.MarshalFile(&users, s.Wf) // Use this to save the CSV back to the file
+
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
