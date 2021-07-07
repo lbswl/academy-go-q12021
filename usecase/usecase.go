@@ -3,6 +3,9 @@ package usecase
 import (
 	"encoding/json"
 	"errors"
+	"log"
+	"runtime"
+	"sync"
 
 	"github.com/lbswl/academy-go-q12021/model"
 	"github.com/lbswl/academy-go-q12021/service"
@@ -20,7 +23,7 @@ func New(service service.ServiceCSV) *UseCase {
 // FindUserbyId returns a user given its id
 func (u *UseCase) FindUserById(Id int) ([]byte, error) {
 	usersJSON := []*model.UserJSON{}
-	users, err := u.service.ReadFile()
+	users, err := u.service.ReadDataSource()
 
 	if err != nil {
 		return []byte(`{"error": "Error reading users file"}`), err
@@ -48,7 +51,7 @@ func (u *UseCase) FindUserById(Id int) ([]byte, error) {
 func (u *UseCase) ReadAllUsers() ([]byte, error) {
 
 	usersJSON := []*model.UserJSON{}
-	usersCSV, err := u.service.ReadFile()
+	usersCSV, err := u.service.ReadDataSource()
 
 	if err != nil {
 		return []byte(`{"error": "Error reading the users file"}`), err
@@ -78,11 +81,90 @@ func (u *UseCase) GetExternalApiUsers() error {
 		return err
 	}
 
-	err = u.service.WriteFile(userCSV)
+	err = u.service.WriteDataSource(userCSV)
 	if err != nil {
 		return err
 	}
 
 	return nil
+
+}
+
+// ReadAllUsersConcurrently returns all users in the csv file
+func (u *UseCase) ReadAllUsersConcurrently(paramsType string, items int, itemsPerWorkers int) ([]byte, error) {
+
+	usersCSV, err := u.service.ReadDataSource()
+
+	if err != nil {
+		return []byte(`{"error": "Error reading the users file"}`), err
+	}
+
+	usersJSON := []*model.UserJSON{}
+
+	values := make(chan int)
+	shutdown := make(chan struct{})
+	poolSize := runtime.GOMAXPROCS(0)
+
+	var wg sync.WaitGroup
+	wg.Add(poolSize)
+
+	for i := 0; i < poolSize; i++ {
+		go func(id int, itemsPerWorkers int) {
+			n := id
+			currentNumItems := 0
+			for {
+
+				select {
+				case values <- n:
+					log.Printf("Worker %d sent %d\n", id, n)
+				case <-shutdown:
+					log.Printf("Worker %d shutting down\n", id)
+					wg.Done()
+					return
+				}
+
+				currentNumItems++
+				if currentNumItems < itemsPerWorkers {
+					n = n + poolSize
+				}
+			}
+		}(i, itemsPerWorkers)
+	}
+
+	last_index := 0
+	for i := range values {
+
+		if paramsType == "odd" && i%2 == 0 {
+			continue
+		}
+
+		if paramsType == "even" && i%2 != 0 {
+			continue
+		}
+
+		if len(usersJSON) == items || i > len(usersCSV)-1 {
+			break
+		}
+
+		if last_index == i {
+			continue
+		}
+
+		usersJSON = append(usersJSON, &model.UserJSON{ID: usersCSV[i].ID,
+			Gender: usersCSV[i].Gender, Title: usersCSV[i].Title, First: usersCSV[i].First, Last: usersCSV[i].Last,
+			Email: usersCSV[i].Email, CellPhone: usersCSV[i].CellPhone, Nationality: usersCSV[i].Nationality})
+		last_index = i
+	}
+
+	close(shutdown)
+	wg.Wait()
+
+	usersMarshalled, err := json.Marshal(usersJSON)
+
+	if err != nil {
+		return []byte(`{"error": "Error marshalling the users file"}`), err
+	}
+
+	return usersMarshalled, nil
 
 }

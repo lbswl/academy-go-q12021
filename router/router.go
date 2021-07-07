@@ -10,6 +10,7 @@ type Controller interface {
 	GetUsers(w http.ResponseWriter, r *http.Request)
 	GetUserById(w http.ResponseWriter, r *http.Request)
 	GetExternalData(w http.ResponseWriter, r *http.Request)
+	GetUsersConcurrent(w http.ResponseWriter, r *http.Request)
 }
 
 // New returns an mux router
@@ -20,6 +21,7 @@ func New(controller Controller) *mux.Router {
 	r.HandleFunc("/api/users", controller.GetUsers).Methods(http.MethodGet)
 	r.HandleFunc("/api/users/{id}", controller.GetUserById).Methods(http.MethodGet)
 	r.HandleFunc("/api/external", controller.GetExternalData).Methods(http.MethodGet)
+	r.HandleFunc("/api/concurrent/{type}/{items}/{items_per_workers}", controller.GetUsersConcurrent).Methods(http.MethodGet)
 
 	return r
 }

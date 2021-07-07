@@ -11,6 +11,7 @@ import (
 type UseCase interface {
 	FindUserById(Id int) ([]byte, error)
 	ReadAllUsers() ([]byte, error)
+	ReadAllUsersConcurrently(paramsType string, items int, itemsPerWorkers int) ([]byte, error)
 	GetExternalApiUsers() error
 }
 
@@ -80,4 +81,40 @@ func (c *Controller) GetExternalData(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"success": "Fetched external data"}`))
 
+}
+
+// GetUsersConturrent returns all users (reads the using concurrency)
+func (c *Controller) GetUsersConcurrent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	params := mux.Vars(r)
+	paramsType := params["type"]
+
+	items, errConv := strconv.Atoi(params["items"])
+
+	if errConv != nil {
+		log.Fatal(errConv)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Error parsing the items parameter"}`))
+	}
+
+	itemsPerWorkers, errConv := strconv.Atoi(params["items_per_workers"])
+
+	if errConv != nil {
+		log.Fatal(errConv)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Error parsing the items_per_workers parameter"}`))
+	}
+
+	users, err := c.useCase.ReadAllUsersConcurrently(paramsType, items, itemsPerWorkers)
+
+	if err != nil {
+		log.Fatal(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(users)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(users)
 }
